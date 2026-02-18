@@ -1,10 +1,13 @@
 import "dotenv/config";
 import express from "express";
 import { AzureOpenAI } from "openai";
+import { ClientSecretCredential, getBearerTokenProvider } from "@azure/identity";
 
 const {
   AZURE_OPENAI_ENDPOINT,
-  AZURE_OPENAI_API_KEY,
+  AZURE_TENANT_ID,
+  AZURE_CLIENT_ID,
+  AZURE_CLIENT_SECRET,
   AZURE_OPENAI_DEPLOYMENT_NAME,
   AZURE_OPENAI_API_VERSION,
   PORT = "3000",
@@ -12,7 +15,9 @@ const {
 
 const missingVars = [
   "AZURE_OPENAI_ENDPOINT",
-  "AZURE_OPENAI_API_KEY",
+  "AZURE_TENANT_ID",
+  "AZURE_CLIENT_ID",
+  "AZURE_CLIENT_SECRET",
   "AZURE_OPENAI_DEPLOYMENT_NAME",
   "AZURE_OPENAI_API_VERSION",
 ].filter((key) => !process.env[key]);
@@ -23,8 +28,11 @@ if (missingVars.length > 0) {
   process.exit(1);
 }
 
+const credential = new ClientSecretCredential(AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET);
+const azureADTokenProvider = getBearerTokenProvider(credential, "https://cognitiveservices.azure.com/.default");
+
 const openaiClient = new AzureOpenAI({
-  apiKey: AZURE_OPENAI_API_KEY,
+  azureADTokenProvider,
   apiVersion: AZURE_OPENAI_API_VERSION,
   endpoint: AZURE_OPENAI_ENDPOINT,
 });
